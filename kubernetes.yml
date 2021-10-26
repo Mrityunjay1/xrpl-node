@@ -1,0 +1,59 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: xrpl-svc
+spec:
+  selector:
+    app: xrpl-live
+  ports:
+    - protocol: TCP
+      port: 30303
+      targetPort: 30303
+      name: xrpl-net
+    - protocol: TCP
+      port: 30005
+      targetPort: 8545
+      name: xrpl-json-rpc
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: xrpl-live
+spec:
+  selector:
+    matchLabels:
+      app: xrpl-live
+  replicas: 1
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: xrpl-live
+    spec:
+      containers:
+        - name: xrpl-live
+          image: test-btc-img
+          imagePullPolicy: Never
+          ports:
+          - containerPort: 8333
+            hostPort: 8333
+            protocol: TCP
+            name: btc-live
+          - containerPort: 8332
+            name: xrpl-json-rpc
+          volumeMounts:
+          - name: xrpl-live-data
+            mountPath: /app/data
+          resources:
+            requests:
+              memory: "1024M"
+              cpu: "750m"
+            limits:
+              memory: "2048M"
+              cpu: "1000m"
+      volumes:
+        - name: xrpl-live-data
+          hostPath:
+            path: /data/btc-live
+            type: Directory
